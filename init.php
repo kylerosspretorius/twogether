@@ -9,5 +9,5 @@ $csvHelper = new CSVHelper();
 $contents = stream_get_contents(STDIN);
 $cHelper->validateContents($contents)->filterContents()->arraySorting('date');
 $cHelper->cakeParser($cHelper->getFilteredContents());
-$csvHelper->csvCleaner($cHelper->getFilteredContents());
-$csvHelper->outputCsv($csvHelper->csvCleaner($cHelper->getFilteredContents()));
+$csvContent = $csvHelper::csvCleaner($cHelper->getFilteredContents());
+//$csvHelper->outputCsv($csvHelper->csvCleaner($cHelper->getFilteredContents()));

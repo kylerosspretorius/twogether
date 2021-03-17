@@ -12,6 +12,9 @@ services:
       - 8080:80
     networks:
       - default
+    depends_on:
+      - php-cli
+
 
   php-cli:
     build:
@@ -21,4 +24,18 @@ services:
       - ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro
       - ~/.composer/auth.json:/root/.composer/auth.json:ro
       - .:/var/www/html
+    depends_on:
+      - redis
 
+  redis:
+    build:
+      context: .
+      dockerfile: .docker/redis/Dockerfile
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+      - ~/.composer/auth.json:/root/.composer/auth.json:ro
+      - .:/var/www/html
+    ports:
+      - 6379:6379

@@ -22,75 +22,22 @@ class CSVHelper
         echo $fileName . ' has been generated at: ' . date('Y-m-d H:i:s') . PHP_EOL;
     }
 
-    public function csvCleaner($array) {
-        $names = '';
-        $gNames = '';
+    public static function csvCleaner($array) {
+
         $CSVFormat = [];
 
-        // Filtering the array
-        $resultArr = array_filter($array, fn($value) => !is_null($value) && $value !== '');
-
-        if (!empty($resultArr)) {
-            foreach($array as $idx => $employee) {
-                if (isset($employee['same_day']) && !isset($employee['small_cake'])) {
-                    foreach($employee as $innerEmp) {
-                        if (isset($innerEmp['name'])) {
-                            $names .= $innerEmp['name'] . ',';
-                            $cakeDay = $innerEmp['cake_day'];
-                        }
-                    }
-
-                    if (isset($employee['shared_day'])) {
-                        $names = rtrim($names, ',');
-                        $CSVFormat[$cakeDay] = [
-                            'Cake Day'    => $cakeDay,
-                            'Small Cakes' => 0,
-                            'Large Cakes' => 1,
-                            'Employees'   => $names,
-                        ];
-                    }
-                    continue;
-                }
-                if (isset($employee['health'])) {
-
-                    $CSVFormat[$employee['cake_day']] = [
-                        'Cake Day'    => $employee['health'],
-                        'Small Cakes' => 1,
-                        'Large Cakes' => 0,
-                        'Employees'   => $employee['name'],
-                    ];
-
-                    continue;
-                }
-
-                if (isset($employee['group']) && isset($employee['shared_day'])) {
-
-                    foreach ($employee as $innEmp) {
-                        if(is_array($innEmp)) {
-                            $gNames .= $innEmp['name'] . ',';
-                            $gNames = rtrim($gNames,',');
-                        }
-                    }
-
-                    $CSVFormat[$employee['shared_day']] = [
-                        'Cake Day'    => $employee['shared_day'],
-                        'Small Cakes' => 0,
-                        'Large Cakes' => 1,
-                        'Employees'   => $gNames,
-                    ];
-                    continue;
-                }
-                if (!isset($employee['group']) && isset($employee['small_cake'])) {
-
-                    $CSVFormat[$employee[0]['cake_day']] = [
-                        'Cake Day'    => $employee[0]['cake_day'],
-                        'Small Cakes' => 1,
-                        'Large Cakes' => 0,
-                        'Employees'   => $employee[0]['name'],
-                    ];
-                    continue;
-                }
-            }
+        if (empty($array)) {
+            return [];
+        }
+        /** @var Employee $emp */
+        foreach ($array as $emp) {
+            $cakeday = $emp->getCakeday();
+            $CSVFormat[$cakeday] = [
+                'Cake Day'    => $cakeday,
+                'Small Cakes' => ($emp->getLargeCake()) ? '' : $emp->getSmallCake(),
+                'Large Cakes' => $emp->getLargeCake(),
+                'Employees'   => $emp->getName()
+            ];
         }
 
         return $CSVFormat;

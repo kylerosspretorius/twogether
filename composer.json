@@ -6,6 +6,7 @@
     "type": "project",
     "require": {
         "php": "^7.4",
+        "predis/predis": "^1.1",
         "rapidwebltd/php-uk-bank-holidays": "^5.0"
     },
     "autoload": {
