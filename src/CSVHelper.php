@@ -6,8 +6,7 @@ class CSVHelper
 {
     CONST FILE_NAME = 'employees-';
 
-    public function outputCsv($data) {
-
+    public static function outputCsv($data) {
         $has_header = false;
         $fileName = self::FILE_NAME.time().'.csv';
         foreach ($data as $c) {
@@ -25,21 +24,27 @@ class CSVHelper
     public static function csvCleaner($array) {
 
         $CSVFormat = [];
-
         if (empty($array)) {
-            return [];
+            throw new \Exception('Array cannot be empty!');
         }
-        /** @var Employee $emp */
-        foreach ($array as $emp) {
-            $cakeday = $emp->getCakeday();
-            $CSVFormat[$cakeday] = [
-                'Cake Day'    => $cakeday,
-                'Small Cakes' => ($emp->getLargeCake()) ? '' : $emp->getSmallCake(),
-                'Large Cakes' => $emp->getLargeCake(),
-                'Employees'   => $emp->getName()
-            ];
+        try {
+            foreach ($array as $emp) {
+                if ($emp instanceof Employee) {
+                    /** @var Employee $emp */
+                    $cakeday = $emp->getCakeday();
+                    if ($emp->getIgnore() !== 1) {
+                        $CSVFormat[$cakeday] = [
+                            'Cake Day'    => $cakeday,
+                            'Small Cakes' => ($emp->getLargeCake()) ? '' : $emp->getSmallCake(),
+                            'Large Cakes' => $emp->getLargeCake(),
+                            'Employees'   => ($emp->getLargeCake()) ? $emp->getGroupNames() : $emp->getName()
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            echo $e->getMessage();
         }
-
         return $CSVFormat;
     }
 

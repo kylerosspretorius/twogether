@@ -10,4 +10,4 @@ $contents = stream_get_contents(STDIN);
 $cHelper->validateContents($contents)->filterContents()->arraySorting('date');
 $cHelper->cakeParser($cHelper->getFilteredContents());
 $csvContent = $csvHelper::csvCleaner($cHelper->getFilteredContents());
-//$csvHelper->outputCsv($csvHelper->csvCleaner($cHelper->getFilteredContents()));
+$csvHelper::outputCsv($csvContent);

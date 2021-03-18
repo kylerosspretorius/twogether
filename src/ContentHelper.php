@@ -5,11 +5,13 @@ namespace App;
 use App\Cache\CacheClient;
 use RapidWeb\UkBankHolidays\Factories\UkBankHolidayFactory;
 
+/**
+ * Class ContentHelper
+ * @package App
+ */
 class ContentHelper
 {
 
-    CONST CAKE_SMALL = 'small_cake';
-    CONST LARGE_CAKE = 'large_cake';
     CONST CURRENT_YEAR = 2021;
     CONST REGION = 'england-and-wales';
 
@@ -25,9 +27,11 @@ class ContentHelper
     /** @var CacheClient  */
     protected $cacheClient;
 
+    /**
+     * ContentHelper constructor.
+     */
     public function __construct() {
         $this->cacheClient = new CacheClient(15);
-
     }
 
     /**
@@ -54,10 +58,6 @@ class ContentHelper
 
         $this->contentsNormalized = $array;
         return $this;
-    }
-
-    public function getInitContents() : array {
-        return $this->contentsNormalized;
     }
 
     /**
@@ -91,6 +91,9 @@ class ContentHelper
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getFilteredContents() : array {
         return $this->filteredContents;
     }
@@ -106,19 +109,32 @@ class ContentHelper
      * @param $bdayDate
      * @return false|string
      */
-    function bdayValidation($bdayDate){
+    function bdayValidation($bdayDate, $init = false){
 
         $day = date("D", strtotime($bdayDate));
         $cakeDate = $bdayDate;
 
         // Lets check if the employee bday falls on a weekend
-        // If so, push them out by one/two days
-        if ($day === 'Sat') {
-            $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +3 Weekday'));
+        // or if it just follows a weekend
+        switch($day) {
+            case 'Sat':
+                $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +3 Weekday'));
+                break;
+            case 'Sun':
+                $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +2 Weekday'));
+                break;
+            case 'Mon':
+                if ($init) {
+                    $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +1 Weekday'));
+                }
+                break;
+            case 'Fri':
+                if ($init) {
+                    $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +1 Weekday'));
+                }
+                break;
         }
-        if ($day === 'Sun') {
-            $cakeDate = date('Y-m-d', strtotime($bdayDate . ' +2 Weekday'));
-        }
+
 
         // Does this new day fall on a public holiday
         // if so, push to another day
@@ -174,12 +190,21 @@ class ContentHelper
             foreach($this->filteredContents as $empObj) {
                $this->cakeDayOrganiser($employeeObj, $empObj);
             }
+            foreach($this->filteredContents as $idx => $emp) {
+                $this->compareOriginalDate($emp, $idx);
+            }
+
         } catch (\Exception $e) {
             print_r($e->getMessage());
         }
         return $this;
     }
 
+    /**
+     * @param array $myArray
+     * @param Employee $emp
+     * @return $this
+     */
     function cakeDayOrganiser(array $myArray, Employee $emp) {
         /** @var Employee $element */
         foreach ($myArray as $idx => $element) {
@@ -187,12 +212,12 @@ class ContentHelper
             if (!empty($emp->getGroupNames() || $emp->getLargeCake())) {
                 continue;
             }
-
             // Check for same cake day
             if ($element->getCakedayStr() == $emp->getCakedayStr()
                 && $element->getName() !== $emp->getName())
             {
                 $element->setGroup($element->getName() . ',' . $emp->getName());
+                $element->setSmallCake(0);
                 $element->setLargeCake(1);
                 $this->filteredContents[$idx] = $element;
                 continue;
@@ -201,7 +226,6 @@ class ContentHelper
             if ($element->getCakedayStr() !== $emp->getCakedayStr()
                 && $element->getName() !== $emp->getName())
             {
-
                 // If this emp is found with element less than day away
                 // we group them together but set ext for health day
                 if ($this->dateChecker($element->getCakeday(), $emp->getCakeday()) < 2) {
@@ -219,6 +243,13 @@ class ContentHelper
                         }
                         continue;
                     }
+                    $prvIdx = $idx-1;
+                    // Flag previous iteration to ignore in final listing
+                    // as we setting the element for grouping
+                    if (isset($this->filteredContents[$prvIdx])) {
+                        $emp->setIgnore(1);
+                        $this->filteredContents[$prvIdx] = $emp;
+                    }
 
                     $element->setLargeCake(1);
                     $element->setGroup($element->getName() . ',' . $emp->getName());
@@ -228,10 +259,37 @@ class ContentHelper
                     $this->filteredContents[$idx] = $element;
                     continue;
                 }
+            } else {
+                if( empty($element->getGroupNames())) {
+                    $element->setSmallCake(1);
+                    $this->filteredContents[$idx] = $element;
+                    continue;
+                }
             }
+        }
+
+        return $this;
+
+    }
+
+    /**
+     * @param Employee $emp
+     * @param $idx
+     */
+    public function compareOriginalDate(Employee $emp, $idx) {
+        $rawBdate = \DateTime::createFromFormat("Y-m-d", $emp->getBday());
+        if ($rawBdate->format(self::CURRENT_YEAR.'-m-d') == $emp->getCakeday()) {
+            $emp->setCakeday($this->bdayValidation($emp->getCakeday(), true));
+            $this->filteredContents[$idx] = $emp;
         }
     }
 
+    /**
+     * @param $date1
+     * @param $date2
+     * @return int
+     * @throws \Exception
+     */
     public function dateChecker($date1, $date2) : int {
         $date1Obj = new \DateTime($date1);
         $date2Obj = new \DateTime($date2);
