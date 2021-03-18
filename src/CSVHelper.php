@@ -2,10 +2,18 @@
 
 namespace App;
 
+/**
+ * Class CSVHelper
+ * @package App
+ */
 class CSVHelper
 {
+
     CONST FILE_NAME = 'employees-';
 
+    /**
+     * @param $data
+     */
     public static function outputCsv($data) {
         $has_header = false;
         $fileName = self::FILE_NAME.time().'.csv';
@@ -21,6 +29,11 @@ class CSVHelper
         echo $fileName . ' has been generated at: ' . date('Y-m-d H:i:s') . PHP_EOL;
     }
 
+    /**
+     * @param $array
+     * @return array
+     * @throws \Exception
+     */
     public static function csvCleaner($array) {
 
         $CSVFormat = [];

@@ -3,18 +3,21 @@ This application is making use of normal OOP structure while
 having a simple docker environment ready for setup. Simply
 follow the below from root folder
 
-
 ## Installing Vendor
 docker run --rm --interactive --tty \
   --volume $PWD:/app \
   composer install
 
-## Usage
-### Running Docker in background
-docker-compose up -d (will build and run)
-docker ps (to get the container id - see whats running)
+### Build docker
+docker-compose build
 
-## Connect to image
+## Usage
+### Run command without connecting
+docker-compose run --rm php-cli php init.php < employees.txt
+
+
+## Connect to image / if not running it direct
+docker ps
 docker exec -it <container_id> /bin/sh
 i.e docker exec -it 9d4928fe9534 /bin/sh
 
